@@ -1,5 +1,9 @@
+import dotenv from 'dotenv'
 import http, { Server } from 'http'
 import { handleRoutes } from './routes/index'
+
+// 加载环境变量
+dotenv.config()
 
 const PORT = process.env['PORT'] || 3001
 
