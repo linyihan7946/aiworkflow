@@ -15,7 +15,7 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['node:http', 'node:fs', 'node:path'],
+      external: ['http', 'https', 'fs', 'path'],
       output: {
         dir: 'dist',
         entryFileNames: '[name].js',
