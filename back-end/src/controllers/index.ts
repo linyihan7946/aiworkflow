@@ -2,7 +2,7 @@ import http from 'http'
 import { defaultLLMService } from '../services/llm/api'
 import { defaultIntentRecognitionService } from '../services/llm/intent-recognition'
 import { defaultImageGenerationService } from '../services/image/generate'
-import { defaultImageEditService } from '../services/image/edit'
+import { defaultImageEditService } from '../services/image/edit-image'
 import { sendSuccessResponse, sendErrorResponse } from '../utils'
 
 export const homeController = (_req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -113,14 +113,13 @@ export const imageEditController = async (req: http.IncomingMessage, res: http.S
     })
     req.on('end', async () => {
       try {
-        const { image, mask, prompt, n, size, response_format } = JSON.parse(body)
+        const { images, prompt, aspect_ratio, resolution, url_type } = JSON.parse(body)
         const result = await defaultImageEditService.editImage({
-          image,
-          mask,
+          images,
           prompt,
-          n,
-          size,
-          response_format
+          aspect_ratio,
+          resolution,
+          url_type
         })
         sendSuccessResponse(res, result, 'Image editing successful')
       } catch (error) {

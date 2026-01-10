@@ -110,7 +110,8 @@ export class ImageGenerationService {
       response_format: 'url'
     });
 
-    if (response.data.length === 0 || !response.data[0].url) {
+
+    if (response.data.length === 0 || !response.data[0] || !response.data[0].url) {
       throw new Error('Failed to generate image URL');
     }
 
@@ -126,7 +127,7 @@ export class ImageGenerationService {
       response_format: 'b64_json'
     });
 
-    if (response.data.length === 0 || !response.data[0].b64_json) {
+    if (response.data.length === 0 || !response.data[0] || !response.data[0].b64_json) {
       throw new Error('Failed to generate image Base64 data');
     }
 
