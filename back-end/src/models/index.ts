@@ -150,14 +150,6 @@ export interface WorkflowExecutionResponse {
   error?: string;
 }
 
-// 创建成功响应
-export const createSuccessResponse = <T>(data?: T, message?: string): ApiResponse<T> => ({
-  success: true,
-  data,
-  message,
-  timestamp: Date.now()
-});
-
 // 创建错误响应
 export const createErrorResponse = <T>(error: ApiError, message?: string): ApiResponse<T> => ({
   success: false,

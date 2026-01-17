@@ -21,7 +21,7 @@ addRoute('/api/data', 'GET', dataController)
 addRoute('/api/llm', 'POST', llmController)
 addRoute('/api/intent', 'POST', intentController)
 addRoute('/api/image/generate', 'POST', imageGenerateController)
-addRoute('/api/image/edit', 'POST', imageEditController)
+addRoute('/api/image/edit', 'POST', imageEditController)// 开发中
 
 // 路由处理器：处理所有注册的路由
 export const handleRoutes = (req: http.IncomingMessage, res: http.ServerResponse) => {
