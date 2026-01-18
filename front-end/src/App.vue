@@ -40,6 +40,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import API_CONFIG from './config'
 
 const selectedFile = ref<File | null>(null)
 const result = ref<any>(null)
@@ -62,7 +63,10 @@ const submitImage = async () => {
     const formData = new FormData()
     formData.append('image', selectedFile.value)
     
-    const response = await fetch('/api/image/edit', {
+    // 构建完整的API请求URL
+    const apiUrl = `${API_CONFIG.baseURL}${API_CONFIG.image.edit}`
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       body: formData
     })
