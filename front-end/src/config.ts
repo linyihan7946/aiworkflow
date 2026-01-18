@@ -1,11 +1,11 @@
 // API配置
 const API_CONFIG = {
   // 基础URL，用于所有API请求
-  baseURL: '/api',
+  baseURL: 'http://localhost:3001',
   
   // 图片相关接口
   image: {
-    edit: '/image/edit',
+    edit: '/api/image/edit',
     // 可以在这里添加更多图片相关接口
   },
   
