@@ -8,14 +8,30 @@
       
       <div class="input-container">
         <div class="form-group">
-          <label for="imageUpload">选择图片</label>
+          <label for="imageUpload">选择图片（支持多选）</label>
           <input 
             type="file" 
             accept="image/*" 
             @change="onFileChange" 
             id="imageUpload"
+            multiple
           />
-          <span class="file-name">{{ selectedFile ? selectedFile.name : '未选择图片' }}</span>
+          <div class="file-list">
+            <div 
+              v-for="(file, index) in selectedFiles" 
+              :key="index" 
+              class="file-item"
+            >
+              {{ file.name }}
+              <button 
+                @click="removeFile(index)" 
+                class="remove-button"
+              >
+                ×
+              </button>
+            </div>
+            <span v-if="selectedFiles.length === 0" class="file-name">未选择图片</span>
+          </div>
         </div>
         
         <div class="form-group">
@@ -58,7 +74,7 @@
         
         <button 
           @click="submitImage" 
-          :disabled="!selectedFile || !formData.prompt" 
+          :disabled="selectedFiles.length === 0 || !formData.prompt" 
           class="submit-button"
         >
           提交编辑
@@ -82,7 +98,7 @@
 import { ref, reactive } from 'vue'
 import API_CONFIG from './config'
 
-const selectedFile = ref<File | null>(null)
+const selectedFiles = ref<File[]>([])
 const result = ref<any>(null)
 const error = ref<string | null>(null)
 
@@ -99,8 +115,14 @@ const formData = reactive({
 const onFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.files && input.files.length > 0) {
-    selectedFile.value = input.files[0]
+    // 将新选择的文件添加到现有数组
+    selectedFiles.value.push(...Array.from(input.files))
   }
+}
+
+// 移除文件
+const removeFile = (index: number) => {
+  selectedFiles.value.splice(index, 1)
 }
 
 // 将文件转换为Base64
@@ -114,18 +136,20 @@ const fileToBase64 = (file: File): Promise<string> => {
 }
 
 const submitImage = async () => {
-  if (!selectedFile.value || !formData.prompt) return
+  if (selectedFiles.value.length === 0 || !formData.prompt) return
   
   result.value = null
   error.value = null
   
   try {
-    // 将图片文件转换为Base64编码
-    const base64Image = await fileToBase64(selectedFile.value)
+    // 将所有图片文件转换为Base64编码
+    const base64Images = await Promise.all(
+      selectedFiles.value.map(fileToBase64)
+    )
     
     // 准备请求数据
     const requestData = {
-      images: [base64Image],
+      images: base64Images,
       prompt: formData.prompt,
       aspect_ratio: formData.aspect_ratio,
       resolution: formData.resolution,
@@ -193,6 +217,42 @@ const submitImage = async () => {
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: #f9f9f9;
+}
+
+.form-group .file-list {
+  margin-top: 8px;
+}
+
+.form-group .file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  color: #333;
+}
+
+.form-group .remove-button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-group .remove-button:hover {
+  background-color: #ff7875;
 }
 
 .form-group .file-name {
