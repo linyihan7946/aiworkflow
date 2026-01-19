@@ -9,9 +9,7 @@
       <!-- 进度条 -->
       <div v-if="isLoading" class="loading-overlay">
         <div class="loading-container">
-          <div class="progress-bar">
-            <div class="progress-bar-fill"></div>
-          </div>
+          <div class="spinner"></div>
           <p>正在处理请求，请稍候...</p>
         </div>
       </div>
@@ -362,32 +360,19 @@ const submitImage = async () => {
   text-align: center;
 }
 
-.progress-bar {
-  width: 200px;
-  height: 10px;
-  background-color: #f0f0f0;
-  border-radius: 5px;
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #008CBA;
+  border-radius: 50%;
   margin: 0 auto 15px;
-  overflow: hidden;
+  animation: spin 1s linear infinite;
 }
 
-.progress-bar-fill {
-  height: 100%;
-  background-color: #008CBA;
-  border-radius: 5px;
-  animation: progress-animation 2s infinite;
-}
-
-@keyframes progress-animation {
-  0% {
-    width: 0%;
-  }
-  50% {
-    width: 70%;
-  }
-  100% {
-    width: 0%;
-  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .result-container {
