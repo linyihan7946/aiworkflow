@@ -27,6 +27,19 @@ addRoute('/api/image/edit', 'POST', imageEditController)// 开发中
 export const handleRoutes = (req: http.IncomingMessage, res: http.ServerResponse) => {
   const { url, method } = req
   
+  // 添加CORS头信息
+  res.setHeader('Access-Control-Allow-Origin', '*') // 允许所有来源访问
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  
+  // 处理OPTIONS预请求
+  if (method === 'OPTIONS') {
+    res.writeHead(200)
+    res.end()
+    return
+  }
+  
   if (!url || !method) {
     res.writeHead(400)
     res.end(JSON.stringify({ message: 'Invalid request' }))

@@ -136,7 +136,14 @@ const fileToBase64 = (file: File): Promise<string> => {
 }
 
 const submitImage = async () => {
-  if (selectedFiles.value.length === 0 || !formData.prompt) return
+  console.log('submitImage函数被调用')
+  console.log('selectedFiles.length:', selectedFiles.value.length)
+  console.log('formData.prompt:', formData.prompt)
+  
+  if (selectedFiles.value.length === 0 || !formData.prompt) {
+    console.log('条件不满足，函数返回')
+    return
+  }
   
   result.value = null
   error.value = null
