@@ -105,10 +105,10 @@ const error = ref<string | null>(null)
 // 表单数据
 const formData = reactive({
   images: [] as string[],
-  prompt: '',
+  prompt: '根据图1的菜，生成类似图2的这个菜的食材跟调料用量图。',
   aspect_ratio: '1:1',
-  resolution: '2K',
-  url_type: '1' // 默认使用YI_API_GEMINI_2_5
+  resolution: '4K',
+  url_type: '2' // 默认使用YI_API_GEMINI_3_0
 })
 
 // 处理文件选择
