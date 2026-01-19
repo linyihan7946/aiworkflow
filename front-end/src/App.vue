@@ -6,6 +6,16 @@
     <div class="image-edit-section">
       <h2>图片编辑接口测试</h2>
       
+      <!-- 进度条 -->
+      <div v-if="isLoading" class="loading-overlay">
+        <div class="loading-container">
+          <div class="progress-bar">
+            <div class="progress-bar-fill"></div>
+          </div>
+          <p>正在处理请求，请稍候...</p>
+        </div>
+      </div>
+      
       <div class="input-container">
         <div class="form-group">
           <label for="imageUpload">选择图片（支持多选）</label>
@@ -84,6 +94,20 @@
       <div class="result-container" v-if="result">
         <h3>响应结果：</h3>
         <pre>{{ JSON.stringify(result, null, 2) }}</pre>
+        
+        <!-- 显示图片链接结果 -->
+        <div v-if="result.data?.data?.length > 0" class="image-results">
+          <h4>生成的图片：</h4>
+          <div class="image-list">
+            <div 
+              v-for="(image) in result.data.data" 
+              class="image-item"
+            >
+              <img :src="image.url" :alt="`Generated Image`" />
+              <p class="image-url">{{ image.url }}</p>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="error-container" v-if="error">
@@ -101,6 +125,7 @@ import API_CONFIG from './config'
 const selectedFiles = ref<File[]>([])
 const result = ref<any>(null)
 const error = ref<string | null>(null)
+const isLoading = ref<boolean>(false)
 
 // 表单数据
 const formData = reactive({
@@ -147,6 +172,7 @@ const submitImage = async () => {
   
   result.value = null
   error.value = null
+  isLoading.value = true
   
   try {
     // 将所有图片文件转换为Base64编码
@@ -181,6 +207,9 @@ const submitImage = async () => {
     result.value = await response.json()
   } catch (err) {
     error.value = err instanceof Error ? err.message : '发生未知错误'
+  } finally {
+    // 无论请求成功还是失败，都关闭进度条
+    isLoading.value = false
   }
 }
 </script>
@@ -312,6 +341,55 @@ const submitImage = async () => {
   border-radius: 4px;
 }
 
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 10px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  margin: 0 auto 15px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #008CBA;
+  border-radius: 5px;
+  animation: progress-animation 2s infinite;
+}
+
+@keyframes progress-animation {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
 .result-container {
   background-color: #f0f8ff;
   border: 1px solid #b3d9ff;
@@ -320,6 +398,39 @@ const submitImage = async () => {
 .error-container {
   background-color: #fff0f0;
   border: 1px solid #ffb3b3;
+}
+
+.image-results {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.image-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.image-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-item .image-url {
+  padding: 10px;
+  font-size: 12px;
+  color: #333;
+  word-break: break-all;
 }
 
 pre {
