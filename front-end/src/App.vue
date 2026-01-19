@@ -1,10 +1,32 @@
 <template>
   <div class="app-container">
-    <h1>Vue3 + TypeScript + Vite</h1>
-    <p>用于测试 back-end 相关接口</p>
+    <!-- 主页面大按钮导航 -->
+    <div v-if="currentPage === 'home'" class="home-page">
+      <div class="button-grid">
+        <button @click="currentPage = 'editImage'" class="action-button edit-button">
+          <h2>编辑图片</h2>
+          <p>上传图片并进行编辑处理</p>
+        </button>
+        
+        <button @click="currentPage = 'generateImage'" class="action-button generate-button">
+          <h2>生成图片</h2>
+          <p>根据提示生成新图片</p>
+        </button>
+        
+        <!-- 可以添加更多功能按钮 -->
+        <!-- <button @click="currentPage = 'otherFunction'" class="action-button">
+          <h2>其他功能</h2>
+          <p>其他接口测试</p>
+        </button> -->
+      </div>
+    </div>
     
-    <div class="image-edit-section">
-      <h2>图片编辑接口测试</h2>
+    <!-- 图片编辑页面 -->
+    <div v-if="currentPage === 'editImage'" class="image-edit-section">
+      <div class="page-header">
+        <h2>图片编辑接口测试</h2>
+        <button @click="currentPage = 'home'" class="back-button">返回主页</button>
+      </div>
       
       <!-- 进度条 -->
       <div v-if="isLoading" class="loading-overlay">
@@ -94,11 +116,11 @@
         <pre>{{ JSON.stringify(result, null, 2) }}</pre>
         
         <!-- 显示图片链接结果 -->
-        <div v-if="result.data?.data?.length > 0" class="image-results">
+        <div v-if="result.data" class="image-results">
           <h4>生成的图片：</h4>
           <div class="image-list">
             <div 
-              v-for="(image) in result.data.data" 
+              v-for="(image) in result.data" 
               class="image-item"
             >
               <img :src="image.url" :alt="`Generated Image`" />
@@ -113,6 +135,83 @@
         <p>{{ error }}</p>
       </div>
     </div>
+    
+    <!-- 图片生成页面 -->
+    <div v-if="currentPage === 'generateImage'" class="image-generate-section">
+      <div class="page-header">
+        <h2>图片生成接口测试</h2>
+        <button @click="currentPage = 'home'" class="back-button">返回主页</button>
+      </div>
+      
+      <!-- 进度条 -->
+      <div v-if="isLoading" class="loading-overlay">
+        <div class="loading-container">
+          <div class="spinner"></div>
+          <p>正在处理请求，请稍候...</p>
+        </div>
+      </div>
+      
+      <div class="input-container">
+        <div class="form-group">
+          <label for="generatePrompt">生成说明</label>
+          <textarea 
+            id="generatePrompt" 
+            v-model="generateFormData.prompt" 
+            placeholder="请输入图片生成说明"
+            rows="3"
+          ></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="generateResolution">分辨率</label>
+          <select id="generateResolution" v-model="generateFormData.resolution">
+            <option value="2K">2K</option>
+            <option value="4K">4K</option>
+            <option value="1080P">1080P</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="generateUrlType">链接类型</label>
+          <select id="generateUrlType" v-model="generateFormData.url_type">
+            <option value="1">YI_API_GEMINI_2_5</option>
+            <option value="2">YI_API_GEMINI_3_0</option>
+          </select>
+        </div>
+        
+        <button 
+          @click="submitGenerate" 
+          :disabled="!generateFormData.prompt" 
+          class="submit-button"
+        >
+          提交生成
+        </button>
+      </div>
+      
+      <div class="result-container" v-if="generateResult">
+        <h3>响应结果：</h3>
+        <pre>{{ JSON.stringify(generateResult, null, 2) }}</pre>
+        
+        <!-- 显示图片链接结果 -->
+        <div v-if="generateResult.data" class="image-results">
+          <h4>生成的图片：</h4>
+          <div class="image-list">
+            <div 
+              v-for="(image) in generateResult.data" 
+              class="image-item"
+            >
+              <img :src="image.url" :alt="`Generated Image`" />
+              <p class="image-url">{{ image.url }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="error-container" v-if="generateError">
+        <h3>错误信息：</h3>
+        <p>{{ generateError }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -120,12 +219,22 @@
 import { ref, reactive } from 'vue'
 import API_CONFIG from './config'
 
+// 当前页面状态
+const currentPage = ref('home') // 'home', 'editImage', 'generateImage'
+
+// 图片编辑相关状态
 const selectedFiles = ref<File[]>([])
 const result = ref<any>(null)
 const error = ref<string | null>(null)
+
+// 图片生成相关状态
+const generateResult = ref<any>(null)
+const generateError = ref<string | null>(null)
+
+// 加载状态
 const isLoading = ref<boolean>(false)
 
-// 表单数据
+// 图片编辑表单数据
 const formData = reactive({
   images: [] as string[],
   prompt: '根据图1的菜，生成类似图2的这个菜的食材跟调料用量图。',
@@ -134,16 +243,22 @@ const formData = reactive({
   url_type: '2' // 默认使用YI_API_GEMINI_3_0
 })
 
-// 处理文件选择
+// 图片生成表单数据
+const generateFormData = reactive({
+  prompt: '',
+  resolution: '4K',
+  url_type: '2' // 默认使用YI_API_GEMINI_3_0
+})
+
+// 处理图片编辑的文件选择
 const onFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.files && input.files.length > 0) {
-    // 将新选择的文件添加到现有数组
     selectedFiles.value.push(...Array.from(input.files))
   }
 }
 
-// 移除文件
+// 移除图片编辑的文件
 const removeFile = (index: number) => {
   selectedFiles.value.splice(index, 1)
 }
@@ -158,15 +273,9 @@ const fileToBase64 = (file: File): Promise<string> => {
   })
 }
 
+// 提交图片编辑请求
 const submitImage = async () => {
-  console.log('submitImage函数被调用')
-  console.log('selectedFiles.length:', selectedFiles.value.length)
-  console.log('formData.prompt:', formData.prompt)
-  
-  if (selectedFiles.value.length === 0 || !formData.prompt) {
-    console.log('条件不满足，函数返回')
-    return
-  }
+  if (selectedFiles.value.length === 0 || !formData.prompt) return
   
   result.value = null
   error.value = null
@@ -206,7 +315,45 @@ const submitImage = async () => {
   } catch (err) {
     error.value = err instanceof Error ? err.message : '发生未知错误'
   } finally {
-    // 无论请求成功还是失败，都关闭进度条
+    isLoading.value = false
+  }
+}
+
+// 提交图片生成请求
+const submitGenerate = async () => {
+  if (!generateFormData.prompt) return
+  
+  generateResult.value = null
+  generateError.value = null
+  isLoading.value = true
+  
+  try {
+    // 准备请求数据
+    const requestData = {
+      prompt: generateFormData.prompt,
+      resolution: generateFormData.resolution,
+      url_type: parseInt(generateFormData.url_type)
+    }
+    
+    // 构建完整的API请求URL
+    const apiUrl = `${API_CONFIG.baseURL}${API_CONFIG.image.generate}`
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    generateResult.value = await response.json()
+  } catch (err) {
+    generateError.value = err instanceof Error ? err.message : '发生未知错误'
+  } finally {
     isLoading.value = false
   }
 }
@@ -214,17 +361,103 @@ const submitImage = async () => {
 
 <style scoped>
 .app-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
 }
 
-.image-edit-section {
+/* 主页样式 */
+.home-page {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.action-button {
+  background-color: white;
+  border: 2px solid #008CBA;
+  border-radius: 12px;
+  padding: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.action-button h2 {
+  margin: 0 0 10px;
+  color: #333;
+  font-size: 24px;
+}
+
+.action-button p {
+  margin: 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.edit-button {
+  border-color: #4CAF50;
+}
+
+.edit-button:hover {
+  background-color: #f0fff0;
+}
+
+.generate-button {
+  border-color: #008CBA;
+}
+
+.generate-button:hover {
+  background-color: #f0f8ff;
+}
+
+/* 页面标题和返回按钮 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+.back-button {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #e0e0e0;
+}
+
+/* 图片编辑和生成部分的通用样式 */
+.image-edit-section,
+.image-generate-section {
   margin-top: 30px;
   padding: 20px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
+  background-color: white;
 }
 
 .input-container {
@@ -251,6 +484,15 @@ const submitImage = async () => {
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: #f9f9f9;
+}
+
+.form-group textarea,
+.form-group select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: Arial, sans-serif;
 }
 
 .form-group .file-list {
@@ -295,23 +537,6 @@ const submitImage = async () => {
   margin-top: 5px;
 }
 
-.form-group textarea {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: Arial, sans-serif;
-  resize: vertical;
-}
-
-.form-group select {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: white;
-}
-
 .submit-button {
   padding: 12px 24px;
   background-color: #008CBA;
@@ -333,12 +558,7 @@ const submitImage = async () => {
   cursor: not-allowed;
 }
 
-.result-container, .error-container {
-  margin-top: 20px;
-  padding: 15px;
-  border-radius: 4px;
-}
-
+/* 加载状态样式 */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -373,6 +593,14 @@ const submitImage = async () => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 结果显示样式 */
+.result-container,
+.error-container {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 4px;
 }
 
 .result-container {

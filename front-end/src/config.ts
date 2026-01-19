@@ -6,6 +6,7 @@ const API_CONFIG = {
   // 图片相关接口
   image: {
     edit: '/api/image/edit',
+    generate: '/api/image/generate',
     // 可以在这里添加更多图片相关接口
   },
   
