@@ -27,9 +27,9 @@
       <div class="form-group">
         <label for="generateResolution">分辨率</label>
         <select id="generateResolution" v-model="generateFormData.resolution">
+          <option value="1K">1K</option>
           <option value="2K">2K</option>
           <option value="4K">4K</option>
-          <option value="1080P">1080P</option>
         </select>
       </div>
       

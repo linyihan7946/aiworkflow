@@ -54,20 +54,26 @@
       <div class="form-group">
         <label for="aspectRatio">长宽比</label>
         <select id="aspectRatio" v-model="formData.aspect_ratio">
+          <option value="auto">自适应</option>
           <option value="1:1">1:1</option>
           <option value="16:9">16:9</option>
           <option value="9:16">9:16</option>
           <option value="4:3">4:3</option>
           <option value="3:4">3:4</option>
+          <option value="3:2">3:2</option>
+          <option value="2:3">2:3</option>
+          <option value="21:9">21:9</option>
+          <option value="5:4">5:4</option>
+          <option value="4:5">4:5</option>
         </select>
       </div>
       
       <div class="form-group">
         <label for="resolution">分辨率</label>
         <select id="resolution" v-model="formData.resolution">
+          <option value="1K">1K</option>
           <option value="2K">2K</option>
           <option value="4K">4K</option>
-          <option value="1080P">1080P</option>
         </select>
       </div>
       
@@ -133,7 +139,7 @@ const isLoading = ref<boolean>(false)
 const formData = reactive({
   images: [] as string[],
   prompt: '根据图1的菜，生成类似图2的这个菜的食材跟调料用量图。',
-  aspect_ratio: '1:1',
+  aspect_ratio: 'auto',
   resolution: '4K',
   url_type: '2' // 默认使用YI_API_GEMINI_3_0
 })
