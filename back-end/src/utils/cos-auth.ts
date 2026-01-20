@@ -85,7 +85,6 @@ export async function generateCosTempKeys(): Promise<CosTempKeys> {
       
       // 记录使用主密钥的信息
       console.info('使用主密钥方式提供COS访问权限');
-      console.log('返回临时密钥:', tempKeys);
       resolve(tempKeys);
       
     } catch (error) {

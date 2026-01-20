@@ -159,7 +159,6 @@ export interface ImageEditConfig {
 const IMAGES_DIR = path.join(__dirname, '../images');
 if (!fs.existsSync(IMAGES_DIR)) {
   fs.mkdirSync(IMAGES_DIR, { recursive: true });
-  console.log(`创建图片保存目录: ${IMAGES_DIR}`);
 }
 
 
@@ -186,7 +185,6 @@ class ImageEditService {
    */
   public async yiApi_Gemini_2_5(request: ImageEditRequest): Promise<ImageEditResponse> {
     // 新的图片编辑接口 - 支持contents格式
-    console.log('收到新格式图片编辑请求');
     const API_KEY = process.env["YIAPI_KEY"] || '';
 
     const imageUrls = request.images;
@@ -241,8 +239,6 @@ class ImageEditService {
           }
         }
       };
-      
-      // console.log('转发到API的请求体:', JSON.stringify(requestBody, null, 2));
       
       // 发送请求到目标API
       const response = await axios.post(API_EDITIMAGE_NEW, requestBody, {
@@ -305,7 +301,6 @@ class ImageEditService {
    */
   public async yiApi_Gemini_3_0(request: ImageEditRequest): Promise<ImageEditResponse> {
     // Gemini 3 Pro图片生成接口 - 支持多张图片合成
-    console.log('收到Gemini 3 Pro图片生成请求');
     const API_KEY = process.env["YIAPI_KEY"] || '';
     
     // 从请求体中获取参数
