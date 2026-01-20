@@ -5,6 +5,115 @@ import { cosUploader } from '../../utils/cos-upload';
 import { getImageMimeTypeFromUrl, imageUrlToBase64Simple } from '../../utils/image-utils';
 import type { GeneratedImage } from './generate';
 
+// 预定义的长宽比列表
+const PREDEFINED_ASPECT_RATIOS = [
+  { value: "1:1", ratio: 1 / 1 },
+  { value: "16:9", ratio: 16 / 9 },
+  { value: "9:16", ratio: 9 / 16 },
+  { value: "4:3", ratio: 4 / 3 },
+  { value: "3:4", ratio: 3 / 4 },
+  { value: "3:2", ratio: 3 / 2 },
+  { value: "2:3", ratio: 2 / 3 },
+  { value: "21:9", ratio: 21 / 9 },
+  { value: "5:4", ratio: 5 / 4 },
+  { value: "4:5", ratio: 4 / 5 }
+];
+
+// 获取图片的实际长宽比
+async function getImageAspectRatio(imageUrl: string): Promise<number> {
+  try {
+    // 发送HEAD请求获取图片信息
+    const response = await axios.head(imageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+      }
+    });
+    
+    // 检查Content-Length是否存在，但这只能获取文件大小
+    // 我们需要实际获取图片的尺寸
+    
+    // 发送GET请求获取图片数据
+    const dataResponse = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+      }
+    });
+    
+    // 解析图片尺寸
+    const imageBuffer = Buffer.from(dataResponse.data);
+    const dimensions = getImageDimensions(imageBuffer);
+    
+    if (dimensions) {
+      return dimensions.width / dimensions.height;
+    }
+    
+    // 如果无法解析尺寸，返回默认值
+    return 16 / 9;
+  } catch (error) {
+    console.error('获取图片长宽比失败:', error);
+    // 发生错误时返回默认值
+    return 16 / 9;
+  }
+}
+
+// 从图片Buffer中获取尺寸
+function getImageDimensions(buffer: Buffer): { width: number; height: number } | null {
+  try {
+    // 检查文件类型
+    const type = buffer.toString('ascii', 0, 2);
+    
+    if (type === 'BM') { // BMP
+      const width = buffer.readUInt32LE(18);
+      const height = buffer.readUInt32LE(22);
+      return { width, height };
+    } else if (type === 'GI') { // GIF
+      const width = buffer.readUInt16LE(6);
+      const height = buffer.readUInt16LE(8);
+      return { width, height };
+    } else if (buffer[0] === 0xff && buffer[1] === 0xd8) { // JPEG
+      let i = 2;
+      while (i < buffer.length) {
+        const marker = buffer[i];
+        const segmentLength = buffer.readUInt16BE(i + 2);
+        
+        if (marker === 0xc0 || marker === 0xc1 || marker === 0xc2) {
+          const height = buffer.readUInt16BE(i + 5);
+          const width = buffer.readUInt16BE(i + 7);
+          return { width, height };
+        }
+        
+        i += segmentLength + 2;
+      }
+    } else if (buffer.toString('ascii', 0, 8) === '89PNG\r\n\x1a\n') { // PNG
+      const width = buffer.readUInt32BE(16);
+      const height = buffer.readUInt32BE(20);
+      return { width, height };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('解析图片尺寸失败:', error);
+    return null;
+  }
+}
+
+// 找到最接近的预定义长宽比
+function findClosestAspectRatio(actualRatio: number): string {
+  let closest = PREDEFINED_ASPECT_RATIOS[0] as { value: string, ratio: number };
+  let minDiff = Math.abs(actualRatio - closest.ratio);
+  
+  for (const ar of PREDEFINED_ASPECT_RATIOS) {
+    const diff = Math.abs(actualRatio - ar.ratio);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = ar;
+    }
+  }
+  
+  return closest.value;
+}
+
 // 从环境变量中读取API端点配置
 const API_EDITIMAGE_NEW = process.env["YIAPI_EDITIMAGE_NEW"] as string || '';
 const API_GEMINI_PRO_IMAGE = process.env["YIAPI_GEMINI_PRO_IMAGE"] as string || '';
@@ -133,7 +242,7 @@ class ImageEditService {
         }
       };
       
-      console.log('转发到API的请求体:', JSON.stringify(requestBody, null, 2));
+      // console.log('转发到API的请求体:', JSON.stringify(requestBody, null, 2));
       
       // 发送请求到目标API
       const response = await axios.post(API_EDITIMAGE_NEW, requestBody, {
@@ -202,8 +311,17 @@ class ImageEditService {
     // 从请求体中获取参数
     const imageUrls = request.images;
     const prompt = request.prompt;
-    const aspectRatio = request.aspect_ratio || "16:9";
+    let aspectRatio = request.aspect_ratio || "16:9";
     const imageSize = request.resolution || "2K";
+    
+    // 如果aspectRatio为"auto"，获取第一张图片的实际长宽比并找到最接近的预定义长宽比
+    if (aspectRatio.toLowerCase() === "auto" && imageUrls && imageUrls.length > 0) {
+      console.log('aspectRatio为auto，正在获取第一张图片的实际长宽比...');
+      const actualRatio = await getImageAspectRatio(imageUrls[0] as string);
+      const closestRatio = findClosestAspectRatio(actualRatio);
+      console.log(`图片实际长宽比: ${actualRatio.toFixed(4)}, 最接近的预定义长宽比: ${closestRatio}`);
+      aspectRatio = closestRatio;
+    }
 
     try {
       

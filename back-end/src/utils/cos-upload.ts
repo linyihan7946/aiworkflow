@@ -298,60 +298,6 @@ export class CosUploader {
 export const cosUploader = new CosUploader();
 
 
-// 测试文件上传
-async function testCosUpload() {
-  console.log('开始测试腾讯云COS文件上传功能...');
-  
-  try {
-    // 测试用图片路径（这里假设使用一个实际存在的测试图片）
-    // 如果没有实际图片，可以创建一个简单的测试图片或使用现有的图片路径
-    const testImagePath = path.join(__dirname, '../images/upload-test.png');
-    
-    // 检查测试图片是否存在，如果不存在则创建一个简单的测试图片（这里仅做示例）
-    if (!fs.existsSync(testImagePath)) {
-      console.log(`测试图片不存在，将创建一个简单的文本文件作为测试: ${testImagePath}`);
-      return;
-    }
-    
-    // 生成唯一的COS存储路径（使用文件内容的md5）
-    const cosPath = cosUploader.generateUniqueFilePath(testImagePath, 'test-uploads');
-    console.log(`将上传到COS路径: ${cosPath}`);
-    
-    // 执行上传
-    console.log(`开始上传文件: ${testImagePath}`);
-    const fileUrl = await cosUploader.uploadFile(testImagePath, cosPath, {
-      contentType: 'image/png', // 假设是PNG图片
-      // onProgress
-    });
-    
-    // 上传成功
-    console.log('✓ 文件上传成功!');
-    console.log(`访问URL: ${fileUrl}`);
-    
-    // 测试Base64上传功能
-    console.log('\n开始测试Base64上传...');
-    // 创建一个简单的Base64图片示例（1x1像素的红色PNG图片）
-    const testBase64Image = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-    const base64Url = await cosUploader.uploadBase64(testBase64Image, 'base64-test.png', {
-      contentType: 'image/png'
-    });
-    console.log('✓ Base64上传成功!');
-    console.log(`Base64上传URL: ${base64Url}`);
-    
-  } catch (error) {
-    console.error('✗ 测试失败:', error instanceof Error ? error.message : error);
-    
-    // 检查是否是环境变量配置问题
-    if (error instanceof Error && error.message.includes('环境变量')) {
-      console.log('提示: 请确保已在.env文件中配置以下环境变量:');
-      console.log('  - TENCENT_COS_SECRET_ID');
-      console.log('  - TENCENT_COS_SECRET_KEY');
-      console.log('  - TENCENT_COS_BUCKET');
-      console.log('  - TENCENT_COS_REGION');
-    }
-  } finally {
-    console.log('测试完成');
-  }
-}
+
 
 // testCosUpload();
