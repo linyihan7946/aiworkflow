@@ -306,11 +306,12 @@ class ImageEditService {
     // 从请求体中获取参数
     const imageUrls = request.images;
     const prompt = request.prompt;
-    let aspectRatio = request.aspect_ratio || "16:9";
+    const oldAspectRatio = request.aspect_ratio || "16:9";
     const imageSize = request.resolution || "2K";
     
     // 如果aspectRatio为"auto"，获取第一张图片的实际长宽比并找到最接近的预定义长宽比
-    if (aspectRatio.toLowerCase() === "auto" && imageUrls && imageUrls.length > 0) {
+    let aspectRatio = oldAspectRatio;
+    if (oldAspectRatio.toLowerCase() === "auto" && imageUrls && imageUrls.length > 0) {
       console.log('aspectRatio为auto，正在获取第一张图片的实际长宽比...');
       const actualRatio = await getImageAspectRatio(imageUrls[0] as string);
       const closestRatio = findClosestAspectRatio(actualRatio);
@@ -373,6 +374,17 @@ class ImageEditService {
       };
       
       console.log(`⏳ 正在处理，预计 ${timeout / 60} 分钟...`);
+
+      // 打印最终使用的长宽比
+      if (oldAspectRatio.toLowerCase() === "auto" && imageUrls && imageUrls.length > 0) {
+        console.log('aspectRatio为auto，正在获取第一张图片的实际长宽比...');
+        const actualRatio = await getImageAspectRatio(imageUrls[0] as string);
+        const closestRatio = findClosestAspectRatio(actualRatio);
+        console.log(`图片实际长宽比: ${actualRatio.toFixed(4)}, 最接近的预定义长宽比: ${closestRatio}`);
+        aspectRatio = closestRatio;
+      } else {
+        console.log(`使用指定长宽比: ${aspectRatio}`);
+      }
       const startTime = Date.now();
       
       // 发送请求到Gemini API，使用动态超时时间
