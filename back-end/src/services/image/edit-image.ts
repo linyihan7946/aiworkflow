@@ -195,7 +195,7 @@ class ImageEditService {
     const API_KEY = process.env["YIAPI_KEY"] || '';
     
     // 从请求体中获取参数
-    const imageUrls = request.images;
+    const imageUrls = request.images || [];
     const prompt = request.prompt;
     const oldAspectRatio = request.aspect_ratio || "16:9";
     const imageSize = request.resolution || "2K";
@@ -218,13 +218,6 @@ class ImageEditService {
           data: [] 
         };
       }
-      
-      if (!imageUrls || imageUrls.length === 0) {
-        return {
-          created: 400, 
-          data: [] 
-        };
-      }
 
       // 设置超时时间映射，与Python代码保持一致
       const TIMEOUT_MAP: { [key: string]: number } = { "1K": 180, "2K": 300, "4K": 360 };
@@ -234,7 +227,9 @@ class ImageEditService {
       const parts: any[] = [];
       
       // 处理每张图片，转换为base64格式
-      console.log(`📤 正在读取 ${imageUrls.length} 张图片...`);
+      if (imageUrls.length > 0) {
+        console.log(`📤 正在读取 ${imageUrls.length} 张图片...`);
+      }
       for (let i = 0; i < imageUrls.length; i++) {
         const imageUrl = imageUrls[i] as string;
         const mime_type = getImageMimeTypeFromUrl(imageUrl);
