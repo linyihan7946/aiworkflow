@@ -1,12 +1,18 @@
 // 图片生成服务
-import https from 'https';
-import http from 'http';
+import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
+import { cosUploader } from '../../utils/cos-upload';
+import { findClosestAspectRatio, getImageAspectRatio, getImageMimeTypeFromUrl, imageUrlToBase64Simple } from '../../utils/image-utils';
 
+const API_GEMINI_PRO_IMAGE = process.env["YIAPI_GEMINI_PRO_IMAGE"] as string || '';
 /**
  * 图片生成请求参数
  */
 export interface ImageGenerationRequest {
   prompt: string;
+  aspect_ratio: string;// 长宽比
+  resolution: string;// 分辨率：2K
   n?: number;
   size?: '256x256' | '512x512' | '1024x1024';
   response_format?: 'url' | 'b64_json';
@@ -39,10 +45,8 @@ export interface ImageGenerationConfig {
 }
 
 export class ImageGenerationService {
-  private config: ImageGenerationConfig;
 
-  constructor(config: ImageGenerationConfig) {
-    this.config = config;
+  constructor() {
   }
 
   /**
@@ -51,73 +55,122 @@ export class ImageGenerationService {
    * @returns 图片生成响应
    */
   async generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResponse> {
-    const { 
-      prompt, 
-      n = 1, 
-      size = '1024x1024', 
-      response_format = 'url', 
-      user 
-    } = request;
+    // Gemini 3 Pro图片生成接口 - 支持多张图片合成
+    const API_KEY = process.env["YIAPI_KEY"] || '';
+    
+    // 从请求体中获取参数
+    const prompt = request.prompt;
+    const aspectRatio = request.aspect_ratio || "16:9";
+    const imageSize = request.resolution || "2K";
 
-    const data = JSON.stringify({
-      prompt,
-      n,
-      size,
-      response_format,
-      user
-    });
+    try {
+      
+      if (!prompt) {
+        return {
+          created: 400, 
+          data: [] 
+        };
+      }
 
-    const options = this.createRequestOptions(data.length);
+      // 设置超时时间映射，与Python代码保持一致
+      const TIMEOUT_MAP: { [key: string]: number } = { "1K": 180, "2K": 300, "4K": 360 };
+      const timeout = TIMEOUT_MAP[imageSize] || 300; // 默认5分钟超时
 
-    return new Promise((resolve, reject) => {
-      const client = this.config.baseUrl.startsWith('https://') ? https : http;
-      const req = client.request(options, (res) => {
-        let responseData = '';
-
-        res.on('data', (chunk) => {
-          responseData += chunk;
-        });
-
-        res.on('end', () => {
-          try {
-            const parsedResponse = JSON.parse(responseData) as ImageGenerationResponse;
-            resolve(parsedResponse);
-          } catch (error) {
-            reject(new Error(`Failed to parse image generation response: ${error}`));
+      // 准备parts数组，包含所有图片和文本提示
+      const parts: any[] = [];
+      parts.push({"text": prompt});
+      
+      // 构建请求体，与Python示例保持一致
+      const requestBody = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+          "responseModalities": ["IMAGE"],
+          "imageConfig": {
+            "aspectRatio": aspectRatio,
+            "imageSize": imageSize
           }
+        }
+      };
+      
+      console.log(`⏳ 正在处理，预计 ${timeout / 60} 分钟...`);
+
+      const startTime = Date.now();
+      
+      // 发送请求到Gemini API，使用动态超时时间
+      const response = await axios.post(API_GEMINI_PRO_IMAGE, requestBody, {
+        headers: {
+          "Authorization": `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: timeout * 1000 // 转换为毫秒
+      });
+      
+      const elapsed = (Date.now() - startTime) / 1000;
+      console.log(`⏱️  实际用时: ${elapsed.toFixed(1)} 秒`);
+      
+      // 处理API响应
+      const data = response.data;
+      const images: string[] = [];
+      
+      if (data.candidates && data.candidates.length > 0) {
+        // 获取生成的图片数据
+        const img_data = data.candidates[0].content.parts[0].inlineData.data;
+        
+        // 将生成的图片上传到COS
+        const imageUrl = await cosUploader.uploadBase64(img_data, '.png', {
+          contentType: 'image/png'
+        });
+        
+        images.push(imageUrl);
+        console.log(`✅ 编辑成功！已保存至: ${imageUrl}`);
+      }
+      
+      console.log("生成的图片URLs:", images);
+
+      const data1: GeneratedImage[] = [];
+      images.forEach((imageUrl) => {
+        data1.push({
+          url: imageUrl
         });
       });
-
-      req.on('error', (error) => {
-        reject(new Error(`Image generation API request failed: ${error}`));
-      });
-
-      req.write(data);
-      req.end();
-    });
+      
+      return {
+        created: 200,
+        data: data1
+      };
+      
+    } catch (error: any) {
+      // 处理失败的编辑
+      return this.handleFailedEdit(error);
+    }
   }
 
-  private createRequestOptions(contentLength: number): http.RequestOptions {
-    const url = new URL(this.config.baseUrl);
-    return {
-      hostname: url.hostname,
-      port: url.port ? parseInt(url.port) : (url.protocol === 'https:' ? 443 : 80),
-      path: url.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Length': contentLength
-      }
-    };
+  // 失败编辑
+  private handleFailedEdit(error: any): ImageGenerationResponse {
+    console.error('新格式图片编辑请求失败:', error.message || error);
+    
+    // 处理错误响应
+    if (error.response) {
+      // 服务器返回了错误状态码
+      return {
+        created: error.response.status || 500,
+        data: [] 
+      };
+    } else if (error.request) {
+      // 请求已发送但没有收到响应
+      return {
+        created: 504,
+        data: [] 
+      };
+    } else {
+      // 其他错误
+      return {
+        created: 500,
+        data: [] 
+      };
+    }
   }
 }
 
-// 默认图片生成服务配置
-export const defaultImageGenerationConfig: ImageGenerationConfig = {
-  apiKey: process.env['IMAGE_API_KEY'] || '',
-  baseUrl: process.env['IMAGE_BASE_URL'] || 'https://api.openai.com/v1/images/generations'
-};
-
 // 默认图片生成服务实例
-export const defaultImageGenerationService = new ImageGenerationService(defaultImageGenerationConfig);
+export const defaultImageGenerationService = new ImageGenerationService();

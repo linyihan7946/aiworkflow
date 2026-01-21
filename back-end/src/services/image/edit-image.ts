@@ -2,38 +2,8 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import { cosUploader } from '../../utils/cos-upload';
-import { getImageAspectRatio, getImageMimeTypeFromUrl, imageUrlToBase64Simple } from '../../utils/image-utils';
+import { findClosestAspectRatio, getImageAspectRatio, getImageMimeTypeFromUrl, imageUrlToBase64Simple } from '../../utils/image-utils';
 import type { GeneratedImage } from './generate';
-
-// 预定义的长宽比列表
-const PREDEFINED_ASPECT_RATIOS = [
-  { value: "1:1", ratio: 1 / 1 },
-  { value: "16:9", ratio: 16 / 9 },
-  { value: "9:16", ratio: 9 / 16 },
-  { value: "4:3", ratio: 4 / 3 },
-  { value: "3:4", ratio: 3 / 4 },
-  { value: "3:2", ratio: 3 / 2 },
-  { value: "2:3", ratio: 2 / 3 },
-  { value: "21:9", ratio: 21 / 9 },
-  { value: "5:4", ratio: 5 / 4 },
-  { value: "4:5", ratio: 4 / 5 }
-];
-
-// 找到最接近的预定义长宽比
-function findClosestAspectRatio(actualRatio: number): string {
-  let closest = PREDEFINED_ASPECT_RATIOS[0] as { value: string, ratio: number };
-  let minDiff = Math.abs(actualRatio - closest.ratio);
-  
-  for (const ar of PREDEFINED_ASPECT_RATIOS) {
-    const diff = Math.abs(actualRatio - ar.ratio);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = ar;
-    }
-  }
-  
-  return closest.value;
-}
 
 // 从环境变量中读取API端点配置
 const API_EDITIMAGE_NEW = process.env["YIAPI_EDITIMAGE_NEW"] as string || '';
@@ -360,13 +330,6 @@ class ImageEditService {
   // 失败编辑
   private handleFailedEdit(error: any): ImageEditResponse {
     console.error('新格式图片编辑请求失败:', error.message || error);
-        
-    // 记录失败操作到数据库
-    try {
-      console.log('失败操作已记录到数据库');
-    } catch (dbError) {
-      console.error('记录失败操作到数据库失败:', dbError);
-    }
     
     // 处理错误响应
     if (error.response) {

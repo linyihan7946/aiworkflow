@@ -2,6 +2,20 @@ import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
 
+// 预定义的长宽比列表
+const PREDEFINED_ASPECT_RATIOS = [
+  { value: "1:1", ratio: 1 / 1 },
+  { value: "16:9", ratio: 16 / 9 },
+  { value: "9:16", ratio: 9 / 16 },
+  { value: "4:3", ratio: 4 / 3 },
+  { value: "3:4", ratio: 3 / 4 },
+  { value: "3:2", ratio: 3 / 2 },
+  { value: "2:3", ratio: 2 / 3 },
+  { value: "21:9", ratio: 21 / 9 },
+  { value: "5:4", ratio: 5 / 4 },
+  { value: "4:5", ratio: 4 / 5 }
+];
+
 /**
  * 将 Base64 字符串保存为本地图片
  * @param {string} base64Str - Base64 字符串（可带格式头，如 data:image/png;base64,xxx）
@@ -271,4 +285,20 @@ function getImageDimensions(buffer: Buffer): { width: number; height: number } |
     console.error('解析图片尺寸失败:', error);
     return null;
   }
+}
+
+// 找到最接近的预定义长宽比
+export function findClosestAspectRatio(actualRatio: number): string {
+  let closest = PREDEFINED_ASPECT_RATIOS[0] as { value: string, ratio: number };
+  let minDiff = Math.abs(actualRatio - closest.ratio);
+  
+  for (const ar of PREDEFINED_ASPECT_RATIOS) {
+    const diff = Math.abs(actualRatio - ar.ratio);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = ar;
+    }
+  }
+  
+  return closest.value;
 }
