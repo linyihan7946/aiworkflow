@@ -25,19 +25,28 @@
       </div>
       
       <div class="form-group">
+        <label for="aspectRatio">长宽比</label>
+        <select id="aspectRatio" v-model="generateFormData.aspect_ratio">
+          <option value="auto">自适应</option>
+          <option value="1:1">1:1</option>
+          <option value="16:9">16:9</option>
+          <option value="9:16">9:16</option>
+          <option value="4:3">4:3</option>
+          <option value="3:4">3:4</option>
+          <option value="3:2">3:2</option>
+          <option value="2:3">2:3</option>
+          <option value="21:9">21:9</option>
+          <option value="5:4">5:4</option>
+          <option value="4:5">4:5</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
         <label for="generateResolution">分辨率</label>
         <select id="generateResolution" v-model="generateFormData.resolution">
           <option value="1K">1K</option>
           <option value="2K">2K</option>
           <option value="4K">4K</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label for="generateUrlType">链接类型</label>
-        <select id="generateUrlType" v-model="generateFormData.url_type">
-          <option value="1">YI_API_GEMINI_2_5</option>
-          <option value="2">YI_API_GEMINI_3_0</option>
         </select>
       </div>
       
@@ -93,8 +102,8 @@ const isLoading = ref<boolean>(false)
 // 图片生成表单数据
 const generateFormData = reactive({
   prompt: '',
-  resolution: '4K',
-  url_type: '2' // 默认使用YI_API_GEMINI_3_0
+  aspect_ratio: '16:9',
+  resolution: '4K'
 })
 
 // 提交图片生成请求
@@ -109,8 +118,8 @@ const submitGenerate = async () => {
     // 准备请求数据
     const requestData = {
       prompt: generateFormData.prompt,
-      resolution: generateFormData.resolution,
-      url_type: parseInt(generateFormData.url_type)
+      aspect_ratio: generateFormData.aspect_ratio,
+      resolution: generateFormData.resolution
     }
     
     // 构建完整的API请求URL
