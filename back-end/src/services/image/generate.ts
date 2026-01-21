@@ -1,9 +1,6 @@
 // 图片生成服务
 import axios from 'axios';
-import * as fs from 'fs';
-import * as path from 'path';
 import { cosUploader } from '../../utils/cos-upload';
-import { findClosestAspectRatio, getImageAspectRatio, getImageMimeTypeFromUrl, imageUrlToBase64Simple } from '../../utils/image-utils';
 
 const API_GEMINI_PRO_IMAGE = process.env["YIAPI_GEMINI_PRO_IMAGE"] as string || '';
 /**
@@ -14,9 +11,6 @@ export interface ImageGenerationRequest {
   aspect_ratio: string;// 长宽比
   resolution: string;// 分辨率：2K
   n?: number;
-  size?: '256x256' | '512x512' | '1024x1024';
-  response_format?: 'url' | 'b64_json';
-  user?: string;
 }
 
 /**

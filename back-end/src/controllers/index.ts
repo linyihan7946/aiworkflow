@@ -87,12 +87,12 @@ export const imageGenerateController = async (req: http.IncomingMessage, res: ht
     })
     req.on('end', async () => {
       try {
-        const { prompt, n, size, response_format } = JSON.parse(body)
+        const { prompt, aspect_ratio, resolution, n } = JSON.parse(body)
         const result = await defaultImageGenerationService.generateImage({
           prompt,
+          aspect_ratio,
+          resolution,
           n,
-          size,
-          response_format
         })
         sendSuccessResponse(res, result, 'Image generation successful')
       } catch (error) {
