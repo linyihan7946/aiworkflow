@@ -2,6 +2,9 @@
 import https from 'https';
 import http from 'http';
 
+/**
+ * 图片生成请求参数
+ */
 export interface ImageGenerationRequest {
   prompt: string;
   n?: number;
@@ -10,17 +13,26 @@ export interface ImageGenerationRequest {
   user?: string;
 }
 
+/**
+ * 生成图片响应数据
+ */
 export interface GeneratedImage {
   url?: string;
   b64_json?: string;
   revised_prompt?: string;
 }
 
+/**
+ * 图片生成响应
+ */
 export interface ImageGenerationResponse {
   created: number;
   data: GeneratedImage[];
 }
 
+/**
+ * 图片生成服务配置
+ */
 export interface ImageGenerationConfig {
   apiKey: string;
   baseUrl: string;
@@ -33,6 +45,11 @@ export class ImageGenerationService {
     this.config = config;
   }
 
+  /**
+   * 生成图片
+   * @param request 图片生成请求参数
+   * @returns 图片生成响应
+   */
   async generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResponse> {
     const { 
       prompt, 
@@ -93,45 +110,6 @@ export class ImageGenerationService {
         'Content-Length': contentLength
       }
     };
-  }
-
-  // 生成多张图片
-  async generateImages(request: ImageGenerationRequest & { n: number }): Promise<GeneratedImage[]> {
-    const response = await this.generateImage(request);
-    return response.data;
-  }
-
-  // 生成单个图片URL
-  async generateImageUrl(prompt: string, size: '256x256' | '512x512' | '1024x1024' = '1024x1024'): Promise<string> {
-    const response = await this.generateImage({
-      prompt,
-      n: 1,
-      size,
-      response_format: 'url'
-    });
-
-
-    if (response.data.length === 0 || !response.data[0] || !response.data[0].url) {
-      throw new Error('Failed to generate image URL');
-    }
-
-    return response.data[0].url;
-  }
-
-  // 生成单个图片Base64
-  async generateImageBase64(prompt: string, size: '256x256' | '512x512' | '1024x1024' = '1024x1024'): Promise<string> {
-    const response = await this.generateImage({
-      prompt,
-      n: 1,
-      size,
-      response_format: 'b64_json'
-    });
-
-    if (response.data.length === 0 || !response.data[0] || !response.data[0].b64_json) {
-      throw new Error('Failed to generate image Base64 data');
-    }
-
-    return response.data[0].b64_json;
   }
 }
 
