@@ -3,8 +3,8 @@
 
 import axios from 'axios';
 
-const workerUrl = "https://aigenimage.xyz";// process.env["CLOUDFLARE_WORKER_URL"] || '';
-const googleApiKey = "AIzaSyC2LNzYPBaoGGWKuT8XnR7N7tIjchd8pTw";// process.env["GOOGLE_API_KEY"] || '';
+const workerUrl = process.env["CLOUDFLARE_WORKER_URL"] || '';
+const googleApiKey = process.env["GOOGLE_API_KEY"] || '';
 /**
  * Cloudflare Worker 代理配置
  */
