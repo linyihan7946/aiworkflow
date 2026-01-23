@@ -5,6 +5,11 @@ import axios from 'axios';
 
 const workerUrl = process.env["CLOUDFLARE_WORKER_URL"] || '';
 const googleApiKey = process.env["GOOGLE_API_KEY"] || '';
+
+export enum ModelNameList {
+  Gemini2Flash001 = 'gemini-2.0-flash-001',// 能用
+  Gemini3ProPreview001 = 'gemini-3-pro-preview-001',// 不能用
+}
 /**
  * Cloudflare Worker 代理配置
  */
@@ -56,7 +61,13 @@ export async function proxyRequest<T>(
       timeout: config.timeout || 30000 // 默认 30 秒超时
     });
 
-    console.log("Cloudflare Worker 代理响应:", response.data);
+    // 使用 JSON.stringify 强制展开所有层级
+    // console.log(JSON.stringify(response.data, null, 2));
+    const data1 = response.data as any;
+    const content = data1.candidates[0].content.parts[0].text;
+    console.log("回复内容:", content);
+
+    // console.log("Cloudflare Worker 代理响应:", response.data);
 
     return response.data;
   } catch (error) {
@@ -81,7 +92,7 @@ export async function geminiChatCompletion(
     role: 'user' | 'assistant' | 'system';
     content: string;
   }>,
-  model: string = 'gemini-2.0-flash-001',
+  model: string,
   temperature: number = 0.7
 ) {
     console.log("开始请求 Gemini 3 聊天对话 API");
@@ -102,7 +113,6 @@ export async function geminiChatCompletion(
     return proxyRequest<any>(config, apiUrl, {
         method: 'POST',
         headers: {
-            // 'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         },
         data: requestData
@@ -110,18 +120,10 @@ export async function geminiChatCompletion(
 }
 
 const response = await geminiChatCompletion(
-    {
-        timeout: 30000,
-        headers: {
-            'Authorization': `Bearer ${googleApiKey}`,
-            'Content-Type': 'application/json'
-        }
-    }, 
+    { timeout: 30000 }, 
     googleApiKey, 
-    [{
-        role: 'user',
-        content: '今天天气怎么样？'
-    }]
+    [{ role: 'user', content: '你是谁？'}],
+    ModelNameList.Gemini2Flash001
 );
 console.log(response);
 
