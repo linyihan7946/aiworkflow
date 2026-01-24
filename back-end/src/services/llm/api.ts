@@ -1,6 +1,7 @@
 // 大模型API请求服务
 import * as https from 'https';
 import * as http from 'http';
+import { geminiChatCompletion, ModelNameList } from '../../utils/cloudflare-worker';
 
 export interface LLMRequest {
   model: string;
@@ -44,46 +45,42 @@ export class LLMService {
   }
 
   async generateText(request: LLMRequest): Promise<LLMResponse> {
-    const { prompt, temperature = 0.7, max_tokens = 1000, top_p = 1.0, frequency_penalty = 0, presence_penalty = 0 } = request;
-
-    const data = JSON.stringify({
-      model: request.model || this.config.model,
-      prompt,
-      temperature,
-      max_tokens,
-      top_p,
-      frequency_penalty,
-      presence_penalty
-    });
-
-    const options = this.createRequestOptions(data.length);
-
-    return new Promise((resolve, reject) => {
-      const client = this.config.baseUrl.startsWith('https://') ? https : http;
-      const req = client.request(options, (res) => {
-        let responseData = '';
-
-        res.on('data', (chunk) => {
-          responseData += chunk;
-        });
-
-        res.on('end', () => {
-          try {
-            const parsedResponse = JSON.parse(responseData) as LLMResponse;
-            resolve(parsedResponse);
-          } catch (error) {
-            reject(new Error(`Failed to parse LLM response: ${error}`));
-          }
-        });
-      });
-
-      req.on('error', (error) => {
-        reject(new Error(`LLM API request failed: ${error}`));
-      });
-
-      req.write(data);
-      req.end();
-    });
+    const { prompt, temperature = 0.7 } = request;
+    
+    try {
+      const response = await geminiChatCompletion(
+        { timeout: 30000 },
+        this.config.apiKey,
+        [{ role: 'user', content: prompt }],
+        ModelNameList.Gemini2Flash001,
+        temperature
+      );
+      
+      // 提取Gemini响应中的文本内容
+      const content = response.candidates[0].content.parts[0].text;
+      
+      // 转换为兼容的LLMResponse格式
+      const llmResponse: LLMResponse = {
+        id: `gemini-${Date.now()}`,
+        object: 'text_completion',
+        created: Math.floor(Date.now() / 1000),
+        model: ModelNameList.Gemini2Flash001,
+        choices: [{
+          text: content,
+          index: 0,
+          finish_reason: 'stop'
+        }],
+        usage: {
+          prompt_tokens: prompt.length,
+          completion_tokens: content.length,
+          total_tokens: prompt.length + content.length
+        }
+      };
+      
+      return llmResponse;
+    } catch (error) {
+      throw new Error(`LLM API request failed: ${error}`);
+    }
   }
 
   private createRequestOptions(contentLength: number): http.RequestOptions {
@@ -168,7 +165,7 @@ export class LLMService {
 
 // 默认配置的LLM服务实例
 export const defaultLLMService = new LLMService({
-  apiKey: process.env['LLM_API_KEY'] || '',
-  baseUrl: process.env['LLM_BASE_URL'] || 'https://api.openai.com/v1/completions',
-  model: process.env['LLM_MODEL'] || 'text-davinci-003'
+  apiKey: process.env['GOOGLE_API_KEY'] || process.env['LLM_API_KEY'] || '',
+  baseUrl: '',
+  model: ModelNameList.Gemini2Flash001
 });
