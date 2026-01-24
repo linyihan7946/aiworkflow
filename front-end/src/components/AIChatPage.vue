@@ -15,7 +15,12 @@
           :key="index"
           :class="['message', message.role]"
         >
-          <div class="message-content">{{ message.content }}</div>
+          <div v-if="message.role === 'user'" class="message-content">
+            {{ message.content }}
+          </div>
+          <div v-else class="message-content ai-content">
+            <div class="ai-message-wrapper" v-html="formatMessage(message.content)"></div>
+          </div>
         </div>
       </div>
       <div class="empty-state" v-else>
@@ -60,6 +65,39 @@ interface Message {
 const messages = ref<Message[]>([]);
 const userInput = ref('');
 const isLoading = ref(false);
+
+// 格式化消息内容，处理Markdown和代码块
+function formatMessage(content: string): string {
+  // 处理标题
+  content = content.replace(/^# (.*$)/gim, '<h1 class="ai-title">$1</h1>');
+  content = content.replace(/^## (.*$)/gim, '<h2 class="ai-subtitle">$1</h2>');
+  content = content.replace(/^### (.*$)/gim, '<h3 class="ai-subsubtitle">$1</h3>');
+  
+  // 处理列表
+  content = content.replace(/^\s*\* (.*$)/gim, '<ul class="ai-list"><li>$1</li></ul>');
+  content = content.replace(/(<\/ul>\s*<ul class="ai-list">)/gi, '');
+  
+  // 处理代码块
+  content = content.replace(/```(\w+)?\n([\s\S]*?)```/gim, (match, lang, code) => {
+    const language = lang || 'plaintext';
+    return `
+      <div class="code-block-container">
+        <div class="code-block-header">
+          <span class="code-language">${language}</span>
+          <button class="copy-button" onclick="copyCodeBlock(this)">
+            复制
+          </button>
+        </div>
+        <pre class="code-block"><code class="language-${language}">${code}</code></pre>
+      </div>
+    `;
+  });
+  
+  // 处理段落
+  content = content.replace(/^(?!<h[1-6]>)(?!<ul>)(?!<div class="code-block-container")(.*$)/gim, '<p>$1</p>');
+  
+  return content;
+}
 
 // 发送消息方法
 async function sendMessage() {
@@ -106,6 +144,31 @@ async function sendMessage() {
   } finally {
     isLoading.value = false;
   }
+}
+
+// 注册全局复制代码函数
+if (typeof window !== 'undefined') {
+  (window as any).copyCodeBlock = function(button: HTMLElement) {
+    const codeBlock = button.closest('.code-block-container')?.querySelector('code');
+    if (codeBlock) {
+      const code = codeBlock.textContent || '';
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '已复制!';
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('复制失败:', err);
+        button.textContent = '复制失败';
+        setTimeout(() => {
+          button.textContent = '复制';
+        }, 2000);
+      });
+    }
+  };
 }
 </script>
 
@@ -217,6 +280,134 @@ async function sendMessage() {
   background-color: #f5f5f5;
   color: #333;
   border-bottom-left-radius: 4px;
+}
+
+/* AI消息内容样式 */
+.ai-content {
+  max-width: 80%;
+}
+
+.ai-message-wrapper {
+  line-height: 1.6;
+}
+
+/* 标题样式 */
+.ai-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 16px 0 8px 0;
+  color: #333;
+}
+
+.ai-subtitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 14px 0 6px 0;
+  color: #444;
+}
+
+.ai-subsubtitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 12px 0 4px 0;
+  color: #555;
+}
+
+/* 段落样式 */
+.ai-message-wrapper p {
+  margin: 8px 0;
+  color: #333;
+}
+
+/* 列表样式 */
+.ai-list {
+  margin: 8px 0 8px 20px;
+  padding-left: 10px;
+}
+
+.ai-list li {
+  margin: 4px 0;
+  color: #333;
+}
+
+/* 代码块样式 */
+.code-block-container {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #e9ecef;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.code-language {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.copy-button {
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: #ffffff;
+  color: #495057;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.copy-button.copied {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.code-block {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  background-color: #f8f9fa;
+}
+
+.code-block code {
+  color: #333;
+}
+
+/* 响应式设计调整 */
+@media (max-width: 768px) {
+  .ai-content {
+    max-width: 90%;
+  }
+  
+  .ai-title {
+    font-size: 20px;
+  }
+  
+  .ai-subtitle {
+    font-size: 16px;
+  }
+  
+  .ai-subsubtitle {
+    font-size: 14px;
+  }
 }
 
 .input-area {
