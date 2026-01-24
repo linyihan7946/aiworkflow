@@ -15,6 +15,11 @@
       v-if="currentPage === 'generateImage'"
       @navigate="navigateToPage"
     />
+    
+    <AIChatPage 
+      v-if="currentPage === 'aiChat'"
+      @navigate="navigateToPage"
+    />
   </div>
 </template>
 
@@ -23,9 +28,10 @@ import { ref } from 'vue'
 import HomePage from './components/HomePage.vue'
 import ImageEditPage from './components/ImageEditPage.vue'
 import ImageGeneratePage from './components/ImageGeneratePage.vue'
+import AIChatPage from './components/AIChatPage.vue'
 
 // 当前页面状态
-const currentPage = ref('home') // 'home', 'editImage', 'generateImage'
+const currentPage = ref('home') // 'home', 'editImage', 'generateImage', 'aiChat'
 
 // 页面导航函数
 const navigateToPage = (pageName: string) => {

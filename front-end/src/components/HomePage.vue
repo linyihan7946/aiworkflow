@@ -11,11 +11,10 @@
         <p>根据提示生成新图片</p>
       </button>
       
-      <!-- 可以添加更多功能按钮 -->
-      <!-- <button @click="$emit('navigate', 'otherFunction')" class="action-button">
-        <h2>其他功能</h2>
-        <p>其他接口测试</p>
-      </button> -->
+      <button @click="$emit('navigate', 'aiChat')" class="action-button chat-button">
+        <h2>AI问答</h2>
+        <p>与AI进行智能对话</p>
+      </button>
     </div>
   </div>
 </template>
@@ -81,5 +80,13 @@ defineEmits(['navigate']);
 
 .generate-button:hover {
   background-color: #f0f8ff;
+}
+
+.chat-button {
+  border-color: #9c27b0;
+}
+
+.chat-button:hover {
+  background-color: #faf0ff;
 }
 </style>
