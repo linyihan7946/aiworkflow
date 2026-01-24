@@ -365,18 +365,20 @@ if (typeof window !== 'undefined') {
 }
 
 .copy-button {
-  font-size: 10px;
-  padding: 2px 6px;
+  font-size: 8px;
+  padding: 1px 3px;
   background-color: #ffffff;
   color: #495057;
   border: 1px solid #ced4da;
-  border-radius: 4px;
+  border-radius: 2px;
   cursor: pointer;
   transition: all 0.2s ease;
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 4px;
   z-index: 10;
+  min-width: 24px;
+  text-align: center;
 }
 
 .copy-button:hover {
@@ -392,11 +394,12 @@ if (typeof window !== 'undefined') {
 
 .code-block {
   margin: 0;
-  padding: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
   overflow-x: auto;
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 0.5;
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 0 0 8px 8px;
@@ -404,6 +407,7 @@ if (typeof window !== 'undefined') {
 
 .code-block code {
   color: #333;
+  line-height: 0.5;
 }
 
 /* 响应式设计调整 */
