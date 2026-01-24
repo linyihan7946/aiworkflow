@@ -289,6 +289,7 @@ if (typeof window !== 'undefined') {
 
 .ai-message-wrapper {
   line-height: 1.6;
+  text-align: left;
 }
 
 /* 标题样式 */
@@ -297,6 +298,7 @@ if (typeof window !== 'undefined') {
   font-weight: bold;
   margin: 16px 0 8px 0;
   color: #333;
+  text-align: left;
 }
 
 .ai-subtitle {
@@ -304,6 +306,7 @@ if (typeof window !== 'undefined') {
   font-weight: bold;
   margin: 14px 0 6px 0;
   color: #444;
+  text-align: left;
 }
 
 .ai-subsubtitle {
@@ -311,23 +314,27 @@ if (typeof window !== 'undefined') {
   font-weight: bold;
   margin: 12px 0 4px 0;
   color: #555;
+  text-align: left;
 }
 
 /* 段落样式 */
 .ai-message-wrapper p {
   margin: 8px 0;
   color: #333;
+  text-align: left;
 }
 
 /* 列表样式 */
 .ai-list {
   margin: 8px 0 8px 20px;
   padding-left: 10px;
+  text-align: left;
 }
 
 .ai-list li {
   margin: 4px 0;
   color: #333;
+  text-align: left;
 }
 
 /* 代码块样式 */
@@ -337,6 +344,8 @@ if (typeof window !== 'undefined') {
   overflow: hidden;
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
 .code-block-header {
@@ -356,14 +365,18 @@ if (typeof window !== 'undefined') {
 }
 
 .copy-button {
-  font-size: 12px;
-  padding: 4px 8px;
+  font-size: 10px;
+  padding: 2px 6px;
   background-color: #ffffff;
   color: #495057;
   border: 1px solid #ced4da;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
 }
 
 .copy-button:hover {
@@ -385,6 +398,8 @@ if (typeof window !== 'undefined') {
   font-size: 14px;
   line-height: 1.4;
   background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0 0 8px 8px;
 }
 
 .code-block code {
