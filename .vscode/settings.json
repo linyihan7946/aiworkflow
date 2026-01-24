@@ -1,0 +1,6 @@
+{
+  "npm.enableScriptExplorer": true,
+  "npm.scriptExplorerAction": "open",
+  "npm.runInTerminal": true,
+  "npm.packageManager": "npm"
+}
