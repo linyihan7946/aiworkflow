@@ -7,7 +7,7 @@ const workerUrl = process.env["CLOUDFLARE_WORKER_URL"] || '';
 
 export enum ModelNameList {
   Gemini2Flash001 = 'gemini-2.0-flash-001',// 能用
-  Gemini3ProPreview001 = 'gemini-3-pro-preview-001',// 不能用
+  Gemini3ProPreview = 'gemini-3-pro-preview',// 不能用
 }
 /**
  * Cloudflare Worker 代理配置
@@ -109,6 +109,7 @@ export async function geminiChatCompletion(
             temperature
         }
     };
+    console.log("请求数据:", requestData);
 
     return proxyRequest<any>(config, apiUrl, {
         method: 'POST',

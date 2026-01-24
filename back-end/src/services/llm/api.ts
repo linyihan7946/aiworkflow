@@ -167,5 +167,5 @@ export class LLMService {
 export const defaultLLMService = new LLMService({
   apiKey: process.env['GOOGLE_API_KEY'] || process.env['LLM_API_KEY'] || '',
   baseUrl: '',
-  model: ModelNameList.Gemini2Flash001
+  model: ModelNameList.Gemini3ProPreview
 });
