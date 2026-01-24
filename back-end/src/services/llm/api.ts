@@ -52,7 +52,7 @@ export class LLMService {
         { timeout: 30000 },
         this.config.apiKey,
         [{ role: 'user', content: prompt }],
-        ModelNameList.Gemini2Flash001,
+        request.model || this.config.model,
         temperature
       );
       
@@ -64,7 +64,7 @@ export class LLMService {
         id: `gemini-${Date.now()}`,
         object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: ModelNameList.Gemini2Flash001,
+        model: request.model || this.config.model,
         choices: [{
           text: content,
           index: 0,

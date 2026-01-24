@@ -4,7 +4,6 @@
 import axios from 'axios';
 
 const workerUrl = process.env["CLOUDFLARE_WORKER_URL"] || '';
-const googleApiKey = process.env["GOOGLE_API_KEY"] || '';
 
 export enum ModelNameList {
   Gemini2Flash001 = 'gemini-2.0-flash-001',// 能用
@@ -96,7 +95,8 @@ export async function geminiChatCompletion(
   temperature: number = 0.7
 ) {
     console.log("开始请求 Gemini 3 聊天对话 API");
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+    // const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const requestData = {
         contents: messages.map(msg => ({
@@ -119,12 +119,5 @@ export async function geminiChatCompletion(
     });
 }
 
-const response = await geminiChatCompletion(
-    { timeout: 30000 }, 
-    googleApiKey, 
-    [{ role: 'user', content: '你是谁？'}],
-    ModelNameList.Gemini2Flash001
-);
-console.log(response);
 
 
