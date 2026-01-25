@@ -1,7 +1,8 @@
 // API配置
 const API_CONFIG = {
   // 基础URL，用于所有API请求
-  baseURL: 'http://localhost:3001',
+  // baseURL: 'http://localhost:3001',
+  baseURL: 'https://www.aigenimage.cn:3001',
   
   // 图片相关接口
   image: {
