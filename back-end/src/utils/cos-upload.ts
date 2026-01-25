@@ -2,23 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as dotenv from 'dotenv';
+import Cos, { type CosError } from 'cos-nodejs-sdk-v5';
 
-// 为COS SDK定义接口类型
-interface COSOptions {
-  SecretId: string;
-  SecretKey: string;
-}
-
-interface COS {
-  SecretId?: string;
-  SecretKey?: string;
-  putObject(params: any, callback: (err: Error | null, data?: any) => void): void;
-  getObjectUrl(params: any): string;
-  deleteObject(params: any, callback: (err: Error | null) => void): void;
-}
-
-// 使用require导入并指定类型
-const COS = require('cos-nodejs-sdk-v5') as new (options: COSOptions) => COS;
 
 // 加载环境变量
 dotenv.config();
@@ -27,13 +12,13 @@ dotenv.config();
  * 腾讯云COS文件上传工具
  */
 export class CosUploader {
-  private cos: COS;
+  private cos: Cos;
   private bucket: string;
   private region: string;
 
   constructor() {
     // 从环境变量获取COS配置
-    this.cos = new COS({
+    this.cos = new Cos({
       SecretId: process.env["TENCENT_COS_SECRET_ID"] || '',
       SecretKey: process.env["TENCENT_COS_SECRET_KEY"] || '',
     });
@@ -90,10 +75,10 @@ export class CosUploader {
           Region: this.region,
           Key: key,
           Body: fileContent,
-          ContentType: options.contentType,
+          ContentType: options.contentType as string,
           // onProgress: options.onProgress,
         },
-        (err: Error | null) => {
+        (err: CosError) => {
           if (err) {
             reject(new Error(`COS上传失败: ${err.message}`));
             return;
@@ -139,10 +124,10 @@ export class CosUploader {
           Region: this.region,
           Key: cosPath,
           Body: buffer,
-          ContentType: options.contentType,
-          onProgress: options.onProgress,
+          ContentType: options.contentType as string,
+          onProgress: options.onProgress as (progressData: { loaded: number; total: number; speed: number }) => void,
         },
-        (err: Error | null) => {
+        (err: CosError) => {
           if (err) {
             reject(new Error(`COS上传失败: ${err.message}`));
             return;
@@ -190,7 +175,7 @@ export class CosUploader {
           Region: this.region,
           Key: cosPath,
         },
-        (err: Error | null) => {
+        (err: CosError) => {
           if (err) {
             reject(new Error(`COS删除失败: ${err.message}`));
             return;
