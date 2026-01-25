@@ -10,8 +10,8 @@ services:
     env_file:
       - .env  # Docker 会自动读取 .env 并将其中的变量注入系统环境
     networks:
-      - app-network
+      - aiworkflow-network
 
 networks:
-  app-network:
+  aiworkflow-network:
     driver: bridge
