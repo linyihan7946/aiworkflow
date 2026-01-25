@@ -7,9 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
-    environment:
-      - NODE_ENV=production
-      # 可以在这里添加其他环境变量
+    env_file:
+      - .env  # Docker 会自动读取 .env 并将其中的变量注入系统环境
     networks:
       - app-network
 
