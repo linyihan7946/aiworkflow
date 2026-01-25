@@ -39,3 +39,7 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# Deployment scripts
+deploy.sh
+deploy-readme.md
