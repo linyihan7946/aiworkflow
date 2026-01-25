@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      # 可以在这里添加其他环境变量
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
